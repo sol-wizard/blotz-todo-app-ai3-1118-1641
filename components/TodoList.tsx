@@ -37,6 +37,7 @@ export default function TodoList({ initialTodos }: TodoListProps) {
             key={todo.id}
             title={todo.title}
             isDone={todo.isDone}
+            createdAt={todo.createdAt}
             onToggle={() => handleToggle(todo)}
             onDelete={() => handleDelete(todo.id)}
           />
