@@ -1,6 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface AddTaskDialogProps {
   onSave: (title: string) => Promise<void>;
@@ -20,45 +29,35 @@ export default function AddTaskDialog({ onSave }: AddTaskDialogProps) {
 
   return (
     <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="mb-4 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
-      >
+      <Button className="mb-4" onClick={() => setIsOpen(true)}>
         Add Task
-      </button>
+      </Button>
 
-      {isOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40">
-          <form
-            onSubmit={handleSubmit}
-            className="w-80 rounded-lg bg-white p-6 shadow-lg"
-          >
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">New task</h2>
-            <input
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent>
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <DialogHeader>
+              <DialogTitle>New task</DialogTitle>
+            </DialogHeader>
+            <Input
               autoFocus
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               placeholder="What do you need to do?"
-              className="mb-4 w-full rounded border border-gray-300 px-3 py-2 text-gray-900"
             />
-            <div className="flex justify-end gap-2">
-              <button
+            <DialogFooter>
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => setIsOpen(false)}
-                className="rounded px-4 py-2 text-gray-600 hover:bg-gray-100"
               >
                 Cancel
-              </button>
-              <button
-                type="submit"
-                className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-              >
-                Save
-              </button>
-            </div>
+              </Button>
+              <Button type="submit">Save</Button>
+            </DialogFooter>
           </form>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
