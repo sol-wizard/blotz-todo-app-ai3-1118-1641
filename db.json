@@ -1,0 +1,7 @@
+{
+  "todos": [
+    { "id": "1", "title": "Watch the React video", "isDone": true },
+    { "id": "2", "title": "Build the to-do app", "isDone": false },
+    { "id": "3", "title": "Open a PR", "isDone": false }
+  ]
+}
