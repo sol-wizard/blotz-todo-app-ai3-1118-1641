@@ -1,36 +1,72 @@
 "use client";
 
-import { useState } from "react";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import AddTaskDialog from "@/components/AddTaskDialog";
 import TodoItem from "@/components/TodoItem";
-import { addTodo, deleteTodo, updateTodo } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { addTodo, deleteTodo, getAllTodos, updateTodo } from "@/lib/api";
 import { Todo } from "@/types/todo";
 
-interface TodoListProps {
-  initialTodos: Todo[];
-}
+export default function TodoList() {
+  const queryClient = useQueryClient();
+  const {
+    data: todos = [],
+    isPending,
+    isError,
+  } = useQuery({
+    queryKey: ["todos"],
+    queryFn: getAllTodos,
+  });
 
-export default function TodoList({ initialTodos }: TodoListProps) {
-  const [todos, setTodos] = useState<Todo[]>(initialTodos);
+  const addMutation = useMutation({
+    mutationFn: ({ title, dueDate }: { title: string; dueDate?: string }) =>
+      addTodo(title, dueDate),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["todos"] }),
+  });
 
   async function handleAdd(title: string, dueDate?: string) {
-    const newTodo = await addTodo(title, dueDate);
-    setTodos([...todos, newTodo]);
+    await addMutation.mutateAsync({ title, dueDate });
   }
 
-  async function handleToggle(todo: Todo) {
-    const updated = await updateTodo(todo.id, !todo.isDone);
-    setTodos(todos.map((t) => (t.id === todo.id ? updated : t)));
+  const toggleMutation = useMutation({
+    mutationFn: (todo: Todo) => updateTodo(todo.id, !todo.isDone),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["todos"] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteTodo(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["todos"] }),
+  });
+
+  const clearDoneMutation = useMutation({
+    mutationFn: (doneTodos: Todo[]) =>
+      Promise.all(doneTodos.map((t) => deleteTodo(t.id))),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["todos"] }),
+  });
+
+  const doneTodos = todos.filter((t) => t.isDone);
+
+  function handleToggle(todo: Todo) {
+    toggleMutation.mutate(todo);
   }
 
-  async function handleDelete(id: string) {
-    await deleteTodo(id);
-    setTodos(todos.filter((t) => t.id !== id));
+  function handleDelete(id: string) {
+    deleteMutation.mutate(id);
   }
 
   return (
     <>
       <AddTaskDialog onSave={handleAdd} />
+      {isPending && <p className="text-gray-500">Loading tasks...</p>}
+      {isError && (
+        <p role="alert" className="text-red-600">
+          Could not load tasks. Is the server running?
+        </p>
+      )}
       <ul className="flex flex-col gap-2">
         {todos.map((todo) => (
           <TodoItem
@@ -44,6 +80,14 @@ export default function TodoList({ initialTodos }: TodoListProps) {
           />
         ))}
       </ul>
+      <Button
+        variant="outline"
+        className="mt-4"
+        disabled={doneTodos.length === 0 || clearDoneMutation.isPending}
+        onClick={() => clearDoneMutation.mutate(doneTodos)}
+      >
+        Clear completed
+      </Button>
     </>
   );
 }
