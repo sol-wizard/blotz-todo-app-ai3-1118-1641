@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import AddTaskDialog from "@/components/AddTaskDialog";
 import TodoItem from "@/components/TodoItem";
+import { Button } from "@/components/ui/button";
 import { addTodo, deleteTodo, getAllTodos, updateTodo } from "@/lib/api";
 import { Todo } from "@/types/todo";
 
@@ -41,6 +42,14 @@ export default function TodoList() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["todos"] }),
   });
 
+  const clearDoneMutation = useMutation({
+    mutationFn: (doneTodos: Todo[]) =>
+      Promise.all(doneTodos.map((t) => deleteTodo(t.id))),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["todos"] }),
+  });
+
+  const doneTodos = todos.filter((t) => t.isDone);
+
   function handleToggle(todo: Todo) {
     toggleMutation.mutate(todo);
   }
@@ -71,6 +80,14 @@ export default function TodoList() {
           />
         ))}
       </ul>
+      <Button
+        variant="outline"
+        className="mt-4"
+        disabled={doneTodos.length === 0 || clearDoneMutation.isPending}
+        onClick={() => clearDoneMutation.mutate(doneTodos)}
+      >
+        Clear completed
+      </Button>
     </>
   );
 }
