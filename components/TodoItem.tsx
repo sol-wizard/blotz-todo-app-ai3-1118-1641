@@ -6,6 +6,7 @@ interface TodoItemProps {
   title: string;
   isDone: boolean;
   createdAt: string;
+  dueDate?: string;
   onToggle: () => void;
   onDelete: () => void;
 }
@@ -14,6 +15,7 @@ export default function TodoItem({
   title,
   isDone,
   createdAt,
+  dueDate,
   onToggle,
   onDelete,
 }: TodoItemProps) {
@@ -29,6 +31,9 @@ export default function TodoItem({
         <span className="text-xs text-muted-foreground">
           {createdAt.slice(0, 10)}
         </span>
+        {dueDate && (
+          <span className="text-xs font-medium">Due {dueDate}</span>
+        )}
         <Button variant="destructive" size="sm" onClick={onDelete}>
           Delete
         </Button>

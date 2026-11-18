@@ -16,14 +16,14 @@ import { Input } from "@/components/ui/input";
 import { taskSchema, TaskFormValues } from "@/lib/schema";
 
 interface AddTaskDialogProps {
-  onSave: (title: string) => Promise<void>;
+  onSave: (title: string, dueDate?: string) => Promise<void>;
 }
 
 export default function AddTaskDialog({ onSave }: AddTaskDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
-    defaultValues: { title: "" },
+    defaultValues: { title: "", dueDate: "" },
   });
 
   const [saveError, setSaveError] = useState("");
@@ -31,7 +31,7 @@ export default function AddTaskDialog({ onSave }: AddTaskDialogProps) {
   async function onSubmit(values: TaskFormValues) {
     setSaveError("");
     try {
-      await onSave(values.title);
+      await onSave(values.title, values.dueDate || undefined);
       form.reset();
       setIsOpen(false);
     } catch {
@@ -63,6 +63,26 @@ export default function AddTaskDialog({ onSave }: AddTaskDialogProps) {
                     autoFocus
                     aria-invalid={fieldState.invalid}
                     placeholder="What do you need to do?"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+            <Controller
+              name="dueDate"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="task-due-date">
+                    Due date (optional)
+                  </FieldLabel>
+                  <Input
+                    {...field}
+                    id="task-due-date"
+                    type="date"
+                    aria-invalid={fieldState.invalid}
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
