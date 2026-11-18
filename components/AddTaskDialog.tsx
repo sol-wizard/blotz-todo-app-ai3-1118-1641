@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,7 +11,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { taskSchema, TaskFormValues } from "@/lib/schema";
 
 interface AddTaskDialogProps {
   onSave: (title: string) => Promise<void>;
@@ -17,13 +21,13 @@ interface AddTaskDialogProps {
 
 export default function AddTaskDialog({ onSave }: AddTaskDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [title, setTitle] = useState("");
+  const form = useForm<TaskFormValues>({
+    resolver: zodResolver(taskSchema),
+    defaultValues: { title: "" },
+  });
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!title.trim()) return;
-    await onSave(title.trim());
-    setTitle("");
+  async function onSubmit(values: TaskFormValues) {
+    await onSave(values.title);
     setIsOpen(false);
   }
 
@@ -35,15 +39,28 @@ export default function AddTaskDialog({ onSave }: AddTaskDialogProps) {
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent>
-          <form onSubmit={handleSubmit} className="grid gap-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
             <DialogHeader>
               <DialogTitle>New task</DialogTitle>
             </DialogHeader>
-            <Input
-              autoFocus
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="What do you need to do?"
+            <Controller
+              name="title"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="task-title">Title</FieldLabel>
+                  <Input
+                    {...field}
+                    id="task-title"
+                    autoFocus
+                    aria-invalid={fieldState.invalid}
+                    placeholder="What do you need to do?"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
             />
             <DialogFooter>
               <Button
