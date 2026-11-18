@@ -1,64 +1,115 @@
 "use client";
 
 import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { taskSchema, TaskFormValues } from "@/lib/schema";
 
 interface AddTaskDialogProps {
-  onSave: (title: string) => Promise<void>;
+  onSave: (title: string, dueDate?: string) => Promise<void>;
 }
 
 export default function AddTaskDialog({ onSave }: AddTaskDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [title, setTitle] = useState("");
+  const form = useForm<TaskFormValues>({
+    resolver: zodResolver(taskSchema),
+    defaultValues: { title: "", dueDate: "" },
+  });
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!title.trim()) return;
-    await onSave(title.trim());
-    setTitle("");
-    setIsOpen(false);
+  const [saveError, setSaveError] = useState("");
+
+  async function onSubmit(values: TaskFormValues) {
+    setSaveError("");
+    try {
+      await onSave(values.title, values.dueDate || undefined);
+      form.reset();
+      setIsOpen(false);
+    } catch {
+      setSaveError("Could not save the task. Please try again.");
+    }
   }
 
   return (
     <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="mb-4 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
-      >
+      <Button className="mb-4" onClick={() => setIsOpen(true)}>
         Add Task
-      </button>
+      </Button>
 
-      {isOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40">
-          <form
-            onSubmit={handleSubmit}
-            className="w-80 rounded-lg bg-white p-6 shadow-lg"
-          >
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">New task</h2>
-            <input
-              autoFocus
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="What do you need to do?"
-              className="mb-4 w-full rounded border border-gray-300 px-3 py-2 text-gray-900"
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
+            <DialogHeader>
+              <DialogTitle>New task</DialogTitle>
+            </DialogHeader>
+            <Controller
+              name="title"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="task-title">Title</FieldLabel>
+                  <Input
+                    {...field}
+                    id="task-title"
+                    autoFocus
+                    aria-invalid={fieldState.invalid}
+                    placeholder="What do you need to do?"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
             />
-            <div className="flex justify-end gap-2">
-              <button
+            <Controller
+              name="dueDate"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="task-due-date">
+                    Due date (optional)
+                  </FieldLabel>
+                  <Input
+                    {...field}
+                    id="task-due-date"
+                    type="date"
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+            {saveError && (
+              <p role="alert" className="text-sm text-destructive">
+                {saveError}
+              </p>
+            )}
+            <DialogFooter>
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => setIsOpen(false)}
-                className="rounded px-4 py-2 text-gray-600 hover:bg-gray-100"
               >
                 Cancel
-              </button>
-              <button
-                type="submit"
-                className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-              >
+              </Button>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
                 Save
-              </button>
-            </div>
+              </Button>
+            </DialogFooter>
           </form>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
