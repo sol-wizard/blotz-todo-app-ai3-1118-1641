@@ -3,7 +3,7 @@
 import { useState } from "react";
 import AddTaskDialog from "@/components/AddTaskDialog";
 import TodoItem from "@/components/TodoItem";
-import { addTodo } from "@/lib/api";
+import { addTodo, deleteTodo, updateTodo } from "@/lib/api";
 import { Todo } from "@/types/todo";
 
 interface TodoListProps {
@@ -18,12 +18,28 @@ export default function TodoList({ initialTodos }: TodoListProps) {
     setTodos([...todos, newTodo]);
   }
 
+  async function handleToggle(todo: Todo) {
+    const updated = await updateTodo(todo.id, !todo.isDone);
+    setTodos(todos.map((t) => (t.id === todo.id ? updated : t)));
+  }
+
+  async function handleDelete(id: string) {
+    await deleteTodo(id);
+    setTodos(todos.filter((t) => t.id !== id));
+  }
+
   return (
     <>
       <AddTaskDialog onSave={handleAdd} />
       <ul className="flex flex-col gap-2">
         {todos.map((todo) => (
-          <TodoItem key={todo.id} title={todo.title} isDone={todo.isDone} />
+          <TodoItem
+            key={todo.id}
+            title={todo.title}
+            isDone={todo.isDone}
+            onToggle={() => handleToggle(todo)}
+            onDelete={() => handleDelete(todo.id)}
+          />
         ))}
       </ul>
     </>

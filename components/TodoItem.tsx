@@ -1,15 +1,30 @@
 interface TodoItemProps {
   title: string;
   isDone: boolean;
+  onToggle: () => void;
+  onDelete: () => void;
 }
 
-export default function TodoItem({ title, isDone }: TodoItemProps) {
+export default function TodoItem({ title, isDone, onToggle, onDelete }: TodoItemProps) {
   return (
     <li className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm">
-      <span>{isDone ? "✅" : "⬜"}</span>
-      <span className={isDone ? "text-gray-400 line-through" : "text-gray-800"}>
+      <input
+        type="checkbox"
+        checked={isDone}
+        onChange={onToggle}
+        className="h-4 w-4 cursor-pointer"
+      />
+      <span
+        className={`flex-1 ${isDone ? "text-gray-400 line-through" : "text-gray-800"}`}
+      >
         {title}
       </span>
+      <button
+        onClick={onDelete}
+        className="rounded px-2 py-1 text-sm text-red-500 hover:bg-red-50"
+      >
+        Delete
+      </button>
     </li>
   );
 }
